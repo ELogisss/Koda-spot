@@ -1,0 +1,36 @@
+[package]
+name = "koda-spotify"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "librespot-backed playback engine for Koda's Spotify mode"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[features]
+default = []
+# Desktop only: librespot's default (rodio/cpal) sink, used by examples/play.rs.
+# Never enabled for Android, where cpal has no backend and the bytes go through
+# ChannelSink into Koda's own player instead.
+desktop-audio = ["librespot-playback/rodio-backend"]
+
+[dependencies]
+# Pinned exactly: a librespot bump is its own task with its own report.
+# rustls with bundled webpki roots, so no OpenSSL, no platform CA plumbing, and
+# the same trust anchors on the desktop and on Android.
+librespot-core = { version = "=0.8.0", default-features = false, features = [
+    "rustls-tls-webpki-roots",
+] }
+librespot-playback = { version = "=0.8.0", default-features = false, features = [
+    "rustls-tls-webpki-roots",
+] }
+
+[dev-dependencies]
+env_logger = "0.11"
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+
+[[example]]
+name = "play"
+required-features = ["desktop-audio"]
