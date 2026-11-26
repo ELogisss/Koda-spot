@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,11 +19,20 @@ import androidx.compose.material.icons.automirrored.rounded.Logout
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.Album
 import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.Forward10
 import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.Repeat
+import androidx.compose.material.icons.rounded.Replay10
+import androidx.compose.material.icons.rounded.Shuffle
+import androidx.compose.material.icons.rounded.SkipNext
+import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -35,6 +45,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -47,20 +58,33 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ivor.ivormusic.R
 import com.ivor.ivormusic.data.spotify.SpotifyAuth
+import com.ivor.ivormusic.data.spotify.SpotifyBackend
+import com.ivor.ivormusic.data.spotify.SpotifyCommand
+import com.ivor.ivormusic.data.spotify.SpotifyFailure
 import com.ivor.ivormusic.data.spotify.SpotifyRedirect
+import com.ivor.ivormusic.data.spotify.SpotifyRemoteState
+import com.ivor.ivormusic.data.spotify.SpotifyRemoteStatus
+import com.ivor.ivormusic.data.spotify.SpotifyRepeat
 import java.text.DateFormat
 import java.util.Date
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class SpotifyViewModel(application: Application) : AndroidViewModel(application) {
     val auth = SpotifyAuth.get(application)
     val state = auth.state
+    val backend = SpotifyBackend.get(application)
 }
 
 @Composable
@@ -91,6 +115,36 @@ internal fun SpotifySettingsPage(onBack: () -> Unit, model: SpotifyViewModel = v
     var clientId by rememberSaveable { mutableStateOf(state.clientId) }
     var copied by remember { mutableStateOf(false) }
     val redirect = state.redirect
+    val backend = model.backend
+    val remote by backend.state.collectAsStateWithLifecycle()
+    val scope = rememberCoroutineScope()
+    val send: (SpotifyCommand) -> Unit = { command ->
+        scope.launch { backend.execute(command)?.let(backend::report) }
+    }
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    /*
+     * Spotify's lifecycle guide, not ours: connect while the controls are on
+     * screen, disconnect when they are not, and never leave the connection
+     * behind in the background or Spotify cannot shut down. repeatOnLifecycle
+     * gives exactly that boundary, and its cancellation is where the
+     * disconnect lives, so leaving the page and backgrounding the app both
+     * let go.
+     */
+    LaunchedEffect(lifecycleOwner, state.connected) {
+        if (!state.connected) {
+            backend.disconnect()
+            return@LaunchedEffect
+        }
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            backend.connect()
+            try {
+                awaitCancellation()
+            } finally {
+                backend.disconnect()
+            }
+        }
+    }
 
     LaunchedEffect(copied) {
         if (copied) {
@@ -194,6 +248,13 @@ internal fun SpotifySettingsPage(onBack: () -> Unit, model: SpotifyViewModel = v
                         }
                     }
                 }
+            }
+            item {
+                SpotifyRemoteSection(
+                    state = remote,
+                    onCommand = send,
+                    onRetry = { backend.connect() }
+                )
             }
             item {
                 SettingsSection(title = stringResource(R.string.spotify_redirect_title)) {
@@ -323,6 +384,213 @@ internal fun SpotifySettingsPage(onBack: () -> Unit, model: SpotifyViewModel = v
             )
         }
     }
+}
+
+@Composable
+private fun SpotifyRemoteSection(
+    state: SpotifyRemoteState,
+    onCommand: (SpotifyCommand) -> Unit,
+    onRetry: () -> Unit
+) {
+    val playback = state.playback
+    val shuffleOn = playback?.shuffle == true
+    val repeatOn = playback?.repeat?.let { it != SpotifyRepeat.OFF } == true
+    SettingsSection(title = stringResource(R.string.spotify_app_title)) {
+        SettingsCard {
+            Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    if (state.status == SpotifyRemoteStatus.CONNECTING ||
+                        state.status == SpotifyRemoteStatus.RECONNECTING
+                    ) {
+                        LoadingIndicator(Modifier.size(20.dp))
+                    } else {
+                        Icon(
+                            if (state.status == SpotifyRemoteStatus.CONNECTED) Icons.Rounded.CheckCircle
+                            else Icons.Rounded.Info,
+                            contentDescription = null,
+                            tint = if (state.status == SpotifyRemoteStatus.CONNECTED) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            }
+                        )
+                    }
+                    Text(
+                        when (state.status) {
+                            SpotifyRemoteStatus.IDLE -> stringResource(R.string.spotify_app_idle)
+                            SpotifyRemoteStatus.CONNECTING -> stringResource(R.string.spotify_app_connecting)
+                            SpotifyRemoteStatus.CONNECTED -> stringResource(R.string.spotify_app_connected)
+                            SpotifyRemoteStatus.RECONNECTING -> stringResource(
+                                R.string.spotify_app_reconnecting,
+                                (state.retryInMs / 1000).coerceAtLeast(1)
+                            )
+                            SpotifyRemoteStatus.FAILED -> stringResource(R.string.spotify_app_failed)
+                        },
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
+                Text(
+                    stringResource(R.string.spotify_app_body),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                state.failure?.let { failure ->
+                    Text(
+                        stringResource(failure.messageRes()),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
+                    )
+                }
+                if (state.status == SpotifyRemoteStatus.FAILED &&
+                    state.failure != SpotifyFailure.APP_NOT_INSTALLED
+                ) {
+                    OutlinedButton(
+                        onClick = onRetry,
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
+                    ) {
+                        Text(stringResource(R.string.spotify_app_retry))
+                    }
+                }
+                if (state.status == SpotifyRemoteStatus.CONNECTED) {
+                    val track = playback?.track
+                    if (track == null) {
+                        Text(
+                            stringResource(R.string.spotify_app_nothing_playing),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    } else {
+                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text(
+                                track.name,
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Medium,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Text(
+                                listOf(track.artist, track.album)
+                                    .filter { it.isNotBlank() }
+                                    .joinToString(" \u00b7 "),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                    state.canPlayOnDemand?.let { onDemand ->
+                        Text(
+                            stringResource(
+                                if (onDemand) R.string.spotify_on_demand_yes
+                                else R.string.spotify_on_demand_no
+                            ),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(
+                            onClick = { onCommand(SpotifyCommand.SkipPrevious) },
+                            enabled = playback?.canSkipPrevious == true
+                        ) {
+                            Icon(
+                                Icons.Rounded.SkipPrevious,
+                                stringResource(R.string.spotify_previous)
+                            )
+                        }
+                        FilledIconButton(
+                            onClick = {
+                                onCommand(
+                                    if (playback?.isPaused == true) SpotifyCommand.Resume
+                                    else SpotifyCommand.Pause
+                                )
+                            },
+                            enabled = playback?.track != null
+                        ) {
+                            if (playback?.isPaused == true) {
+                                Icon(Icons.Rounded.PlayArrow, stringResource(R.string.spotify_resume))
+                            } else {
+                                Icon(Icons.Rounded.Pause, stringResource(R.string.spotify_pause))
+                            }
+                        }
+                        IconButton(
+                            onClick = { onCommand(SpotifyCommand.SkipNext) },
+                            enabled = playback?.canSkipNext == true
+                        ) {
+                            Icon(Icons.Rounded.SkipNext, stringResource(R.string.spotify_next))
+                        }
+                    }
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(
+                            onClick = { onCommand(SpotifyCommand.ToggleShuffle) },
+                            enabled = playback?.canToggleShuffle == true
+                        ) {
+                            Icon(
+                                Icons.Rounded.Shuffle,
+                                stringResource(R.string.spotify_shuffle),
+                                tint = if (shuffleOn) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        IconButton(
+                            onClick = { onCommand(SpotifyCommand.ToggleRepeat) },
+                            enabled = playback != null && (playback.canRepeatOne || playback.canRepeatAll)
+                        ) {
+                            Icon(
+                                Icons.Rounded.Repeat,
+                                stringResource(R.string.spotify_repeat),
+                                tint = if (repeatOn) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        IconButton(
+                            onClick = { onCommand(SpotifyCommand.SeekBy(-SEEK_STEP_MS)) },
+                            enabled = playback?.canSeek == true
+                        ) {
+                            Icon(Icons.Rounded.Replay10, stringResource(R.string.spotify_back_ten))
+                        }
+                        IconButton(
+                            onClick = { onCommand(SpotifyCommand.SeekBy(SEEK_STEP_MS)) },
+                            enabled = playback?.canSeek == true
+                        ) {
+                            Icon(Icons.Rounded.Forward10, stringResource(R.string.spotify_forward_ten))
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** One press of the seek buttons. */
+private const val SEEK_STEP_MS = 10_000L
+
+@StringRes
+private fun SpotifyFailure.messageRes(): Int = when (this) {
+    SpotifyFailure.APP_NOT_INSTALLED -> R.string.spotify_failure_not_installed
+    SpotifyFailure.NOT_SIGNED_IN -> R.string.spotify_failure_not_signed_in
+    SpotifyFailure.NOT_AUTHORIZED -> R.string.spotify_failure_not_authorized
+    SpotifyFailure.AUTH_FAILED -> R.string.spotify_failure_auth
+    SpotifyFailure.OFFLINE -> R.string.spotify_failure_offline
+    SpotifyFailure.UNSUPPORTED_VERSION -> R.string.spotify_failure_old_app
+    SpotifyFailure.DISCONNECTED -> R.string.spotify_failure_disconnected
+    SpotifyFailure.NO_CLIENT_ID -> R.string.spotify_failure_no_client_id
+    SpotifyFailure.ON_DEMAND_UNAVAILABLE -> R.string.spotify_failure_on_demand
+    SpotifyFailure.NO_ANSWER -> R.string.spotify_failure_no_answer
+    SpotifyFailure.UNKNOWN -> R.string.spotify_failure_unknown
 }
 
 @Composable

@@ -20,6 +20,10 @@ graphicsShapes = "1.0.1"
 splashScreen = "1.0.1"
 newpipeExtractor = "v0.26.5"
 okhttp = "4.12.0"
+# The Spotify App Remote SDK's default JsonMapper is Gson. 2.8.9 is what
+# security-crypto already resolves through Tink; declaring it makes the version
+# a decision instead of an accident of that dependency graph.
+gson = "2.8.9"
 securityCrypto = "1.1.0-alpha06"
 palette = "1.0.0"
 kotlinxSerializationJson = "1.7.3"
@@ -69,6 +73,7 @@ androidx-ui-text-google-fonts = { group = "androidx.compose.ui", name = "ui-text
 androidx-palette = { group = "androidx.palette", name = "palette", version.ref = "palette" }
 newpipe-extractor = { group = "com.github.TeamNewPipe", name = "NewPipeExtractor", version.ref = "newpipeExtractor" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 androidx-security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "securityCrypto" }
 kotlinx-coroutines-guava = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-guava", version.ref = "coroutinesGuava" }
 jaudiotagger = { group = "net.jthink", name = "jaudiotagger", version.ref = "jaudiotagger" }

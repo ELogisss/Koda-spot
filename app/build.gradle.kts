@@ -222,6 +222,13 @@ dependencies {
         exclude(group = "org.mozilla", module = "rhino-engine")
     }
     implementation(libs.okhttp)
+    // Spotify playback control. The App Remote SDK is not on Maven Central: the
+    // AAR is the distribution Spotify documents, and its NOTICE and SHA-256 sit
+    // next to the file in app/libs.
+    implementation(files("libs/spotify-app-remote-0.8.0.aar"))
+    // The SDK's default JsonMapper is Gson, so Gson must be on the runtime
+    // classpath. Declared rather than inherited from security-crypto's Tink.
+    implementation(libs.gson)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.androidx.security.crypto)
     implementation(libs.kotlinx.coroutines.guava)

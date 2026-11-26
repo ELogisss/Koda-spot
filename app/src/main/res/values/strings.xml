@@ -2852,4 +2852,36 @@
     <string name="spotify_error_generic">Something went wrong talking to Spotify. Try again.</string>
     <string name="spotify_error_not_connected">Not signed in to Spotify.</string>
     <string name="spotify_error_browser">No app on this phone can open the browser.</string>
+
+    <!-- App Remote: orders sent to the official Spotify app. -->
+    <string name="spotify_app_title">Spotify app</string>
+    <string name="spotify_app_body">Playback stays in Spotify. These controls only send orders to it, and the connection closes when you leave this page.</string>
+    <string name="spotify_app_idle">Not connected</string>
+    <string name="spotify_app_connecting">Connecting to Spotify…</string>
+    <string name="spotify_app_connected">Connected</string>
+    <string name="spotify_app_reconnecting">Spotify closed. Trying again in %1$d s.</string>
+    <string name="spotify_app_failed">Could not connect</string>
+    <string name="spotify_app_retry">Try again</string>
+    <string name="spotify_app_nothing_playing">Nothing is playing in Spotify.</string>
+    <string name="spotify_on_demand_yes">This account can start single tracks.</string>
+    <string name="spotify_on_demand_no">This account cannot start single tracks on demand. Playlists and albums still work.</string>
+    <string name="spotify_previous">Previous</string>
+    <string name="spotify_next">Next</string>
+    <string name="spotify_pause">Pause</string>
+    <string name="spotify_resume">Play</string>
+    <string name="spotify_shuffle">Shuffle</string>
+    <string name="spotify_repeat">Repeat</string>
+    <string name="spotify_back_ten">Back 10 seconds</string>
+    <string name="spotify_forward_ten">Forward 10 seconds</string>
+    <string name="spotify_failure_not_installed">The Spotify app is not installed on this phone.</string>
+    <string name="spotify_failure_not_signed_in">Open the Spotify app and sign in, then try again.</string>
+    <string name="spotify_failure_not_authorized">Spotify did not grant Koda control. Try again and accept the request.</string>
+    <string name="spotify_failure_auth">Spotify rejected Koda\'s credentials. Check the package name, the fingerprint and the redirect URI in the dashboard.</string>
+    <string name="spotify_failure_offline">Spotify is in offline mode. Turn it off in the Spotify app.</string>
+    <string name="spotify_failure_old_app">This Spotify version is too old for remote control. Update Spotify.</string>
+    <string name="spotify_failure_disconnected">The Spotify app closed. Reconnecting…</string>
+    <string name="spotify_failure_no_client_id">Sign in to Spotify first.</string>
+    <string name="spotify_failure_on_demand">This account cannot start a single track on demand. Playlists and albums still work.</string>
+    <string name="spotify_failure_no_answer">Spotify did not answer.</string>
+    <string name="spotify_failure_unknown">Something went wrong talking to the Spotify app.</string>
 </resources>
