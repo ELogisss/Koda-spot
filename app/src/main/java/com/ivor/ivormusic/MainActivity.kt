@@ -675,12 +675,20 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * Pick up the YouTube link an intent carries, if it has one, and neutralize
-     * the intent so it cannot fire twice - the activity is recreated on theme
+     * Pick up whatever an intent carries - a shared YouTube link or file, a
+     * launcher shortcut, or the Spotify sign-in callback - and neutralize the
+     * intent so it cannot fire twice - the activity is recreated on theme
      * and locale changes, and would otherwise replay the same link each time.
      */
     private fun takeSharedLink(intent: Intent?) {
         if (intent == null) return
+        // The Spotify sign-in callback. Handled ahead of the share paths: a
+        // koda:// URI is not a YouTube link, and once the code is read the
+        // intent is emptied so a recreation cannot replay it.
+        if (com.ivor.ivormusic.data.spotify.SpotifyAuth.get(this).handleRedirect(intent)) {
+            neutralize(intent)
+            return
+        }
         // A launcher shortcut (ModeShortcuts): open in music or video mode.
         when (intent.action) {
             com.ivor.ivormusic.util.ModeShortcuts.ACTION_OPEN_MUSIC,

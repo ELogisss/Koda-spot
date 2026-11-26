@@ -135,6 +135,24 @@
             </intent-filter>
 
             <!--
+                The Spotify sign-in callback. Both redirect styles land here:
+                koda://spotify-callback directly, and the HTTPS bridge page on
+                the user's tailnet, which forwards to the same URI keeping the
+                query. singleTask already delivers a second launch through
+                onNewIntent, and MainActivity neutralizes the intent after
+                reading the code so a recreation cannot replay it.
+            -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="koda" />
+                <data android:host="spotify-callback" />
+            </intent-filter>
+
+            <!--
                 "Open with" for video files, so Koda is offered alongside the
                 gallery and other players. Both halves are needed: a file
                 manager sends ACTION_VIEW with the file in the data URI, while a

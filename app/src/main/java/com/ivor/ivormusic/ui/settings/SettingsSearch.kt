@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Animation
+import androidx.compose.material.icons.rounded.Album
 import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material.icons.rounded.ThumbDown
 import androidx.compose.material.icons.rounded.Public
@@ -221,6 +222,10 @@ internal fun buildSettingsSearchIndex(
     entry("lastfm", stringResource(R.string.lastfm_title), "Last.fm", Icons.Rounded.History,
         listOf("lastfm", "last.fm", "scrobble", "scrobbling", "sync", "api key", "login", "listening history")) {
         onOpenPage(SettingsPage.LASTFM)
+    }
+    entry("spotify", stringResource(R.string.spotify_title), "Spotify", Icons.Rounded.Album,
+        listOf("spotify", "login", "sign in", "oauth", "pkce", "client id", "redirect", "playback")) {
+        onOpenPage(SettingsPage.SPOTIFY)
     }
 
     // Account

@@ -278,6 +278,7 @@ internal enum class SettingsPage {
     LYRICS,
     LYRICS_APPEARANCE,
     LASTFM,
+    SPOTIFY,
     SPONSORBLOCK,
     APP_ICON,
     BACKUP,
@@ -869,6 +870,7 @@ fun SettingsScreen(
         )
 
         SettingsPage.LASTFM -> LastFmSettingsPage(onBack = { page = SettingsPage.HUB })
+        SettingsPage.SPOTIFY -> SpotifySettingsPage(onBack = { page = SettingsPage.HUB })
         SettingsPage.LYRICS_APPEARANCE -> LyricsAppearancePage(
             onBack = { page = SettingsPage.LYRICS_APPEARANCE.parent }
         )
@@ -1835,6 +1837,11 @@ private fun SettingsHub(
                         LastFmHubRow(
                             onClick = { onOpenPage(SettingsPage.LASTFM) },
                             selected = selectedPage == SettingsPage.LASTFM
+                        )
+                        SettingsDivider()
+                        SpotifyHubRow(
+                            onClick = { onOpenPage(SettingsPage.SPOTIFY) },
+                            selected = selectedPage == SettingsPage.SPOTIFY
                         )
                         SettingsDivider()
                         SettingsHubRow(

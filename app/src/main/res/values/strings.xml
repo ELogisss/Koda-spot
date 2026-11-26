@@ -2813,4 +2813,43 @@
     <string name="recap_share_saved">Saved</string>
     <string name="recap_share_failed">Couldn\'t make the image. Try again.</string>
     <string name="recap_share_footer">KODA RECAP</string>
+
+    <!-- Spotify login. Koda controls the official Spotify app and hosts no
+         Spotify audio of its own. -->
+    <string name="spotify_title">Spotify</string>
+    <string name="spotify_off">Off</string>
+    <string name="spotify_not_connected">Not signed in</string>
+    <string name="spotify_hub_explanation">Sign in so Koda can control the official Spotify app. Search, library and playback stay in Spotify.</string>
+    <string name="spotify_intro_title">Spotify playback, controlled from Koda</string>
+    <string name="spotify_intro_body">Koda does not play Spotify audio itself. It signs in with your own Spotify client ID and sends playback orders to the official Spotify app, which keeps playing in the background. Playback control arrives in a later step; this page only sets up the sign-in.</string>
+    <string name="spotify_notice">Spotify can change or withdraw this access at any time, and playback needs the official Spotify app installed on this phone.</string>
+    <string name="spotify_client_id">Client ID</string>
+    <string name="spotify_client_id_help">The 32-character client ID of your own app in the Spotify Developer Dashboard. Koda never asks for a client secret.</string>
+    <string name="spotify_redirect_title">Redirect URI</string>
+    <string name="spotify_redirect_help">This exact address must be allowlisted in the dashboard. Spotify compares it character by character, and the login fails before Koda sees anything if the two differ.</string>
+    <string name="spotify_redirect_mode">Redirect style</string>
+    <string name="spotify_redirect_mode_help">Choose the address you allowlisted in the dashboard.</string>
+    <string name="spotify_redirect_https">HTTPS bridge</string>
+    <string name="spotify_redirect_scheme">koda:// link</string>
+    <string name="spotify_copy">Copy</string>
+    <string name="spotify_copied">Copied</string>
+    <string name="spotify_sign_in">Sign in to Spotify</string>
+    <string name="spotify_waiting">Waiting for the browser to come back. Finish the sign-in there, then return to Koda.</string>
+    <string name="spotify_cancel_sign_in">Cancel sign-in</string>
+    <string name="spotify_sign_out">Sign out of Spotify</string>
+    <string name="spotify_test">Test connection</string>
+    <string name="spotify_test_ok">The profile and the catalog both answered.</string>
+    <string name="spotify_tested_at">Last check: %1$s</string>
+    <string name="spotify_account">Signed in as %1$s</string>
+    <string name="spotify_section_account">Account</string>
+    <string name="spotify_error_client_id">That is not a Spotify client ID. It is 32 hexadecimal characters.</string>
+    <string name="spotify_error_state">The reply did not match the sign-in Koda started. Try again.</string>
+    <string name="spotify_error_denied">The sign-in was cancelled or refused by Spotify.</string>
+    <string name="spotify_error_revoked">Spotify rejected the session. Sign in again.</string>
+    <string name="spotify_error_limit">Spotify is rate limiting this app. Wait a minute and try again.</string>
+    <string name="spotify_error_network">Couldn\'t reach Spotify. Check the connection and try again.</string>
+    <string name="spotify_error_http">Spotify answered with error %1$d.</string>
+    <string name="spotify_error_generic">Something went wrong talking to Spotify. Try again.</string>
+    <string name="spotify_error_not_connected">Not signed in to Spotify.</string>
+    <string name="spotify_error_browser">No app on this phone can open the browser.</string>
 </resources>
