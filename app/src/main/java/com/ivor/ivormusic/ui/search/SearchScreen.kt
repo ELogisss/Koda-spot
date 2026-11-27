@@ -1,6 +1,13 @@
 package com.ivor.ivormusic.ui.search
 
 import com.ivor.ivormusic.data.isMissingChannelName
+import com.ivor.ivormusic.data.spotify.SpotifyAuth
+import com.ivor.ivormusic.data.spotify.SpotifyBackend
+import com.ivor.ivormusic.data.spotify.SpotifyCommand
+import com.ivor.ivormusic.data.spotify.SpotifySearchKind
+import com.ivor.ivormusic.data.spotify.SpotifySearchState
+import com.ivor.ivormusic.data.spotify.SpotifyWebApi
+import com.ivor.ivormusic.ui.spotify.spotifySearchSection
 import com.ivor.ivormusic.ui.video.videoListItems
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -248,6 +255,12 @@ fun SearchScreen(
     // Music mode's Videos tab: ordinary YouTube uploads (remixes, covers, fan
     // edits) that YouTube Music does not list, played as songs.
     var videoSongResults by remember { mutableStateOf<List<Song>>(emptyList()) }
+    val context = LocalContext.current
+    val spotifyAuth = remember { SpotifyAuth.get(context) }
+    val spotifyState by spotifyAuth.state.collectAsState()
+    val spotifyApi = remember { SpotifyWebApi.get(context) }
+    val spotifyBackend = remember { SpotifyBackend.get(context) }
+    var spotifySearchState by remember { mutableStateOf(SpotifySearchState()) }
     val restrictedFilter = com.ivor.ivormusic.ui.video.rememberRestrictedFilter()
     var videoResults by remember { mutableStateOf<List<VideoItem>>(emptyList()) }
     val searchListLayout = com.ivor.ivormusic.ui.video.LocalVideoListLayout.current
@@ -496,6 +509,40 @@ fun SearchScreen(
     // Reset visible count when query changes
     LaunchedEffect(query) {
         visibleLocalCount = 20
+    }
+
+    LaunchedEffect(query, spotifyState.connected) {
+        if (query.isBlank() || !spotifyState.connected) {
+            spotifySearchState = SpotifySearchState()
+            return@LaunchedEffect
+        }
+        kotlinx.coroutines.delay(350)
+        spotifySearchState = spotifySearchState.copy(
+            query = query,
+            loading = true,
+            failure = null,
+        )
+        try {
+            val results = spotifyApi.search(query)
+            spotifySearchState = SpotifySearchState(
+                query = query,
+                tracks = results.tracks,
+                albums = results.albums,
+                playlists = results.playlists,
+            )
+        } catch (e: com.ivor.ivormusic.data.spotify.SpotifyApiException) {
+            spotifySearchState = spotifySearchState.copy(
+                query = query,
+                loading = false,
+                failure = e.failure,
+            )
+        } catch (_: Exception) {
+            spotifySearchState = spotifySearchState.copy(
+                query = query,
+                loading = false,
+                failure = com.ivor.ivormusic.data.spotify.SpotifyApiFailure.NETWORK,
+            )
+        }
     }
 
     // Resolve a pasted YouTube link (video, playlist or channel) off the normal
@@ -1500,6 +1547,33 @@ fun SearchScreen(
                     }
                 }
             }
+
+            if (spotifyState.connected && query.isNotBlank()) {
+                    val spotifyKind = when (selectedCategory) {
+                        SearchCategory.ALBUMS -> SpotifySearchKind.ALBUMS
+                        SearchCategory.PLAYLISTS -> SpotifySearchKind.PLAYLISTS
+                        else -> SpotifySearchKind.TRACKS
+                    }
+                    spotifySearchSection(
+                        state = spotifySearchState,
+                        kind = spotifyKind,
+                        onPlay = { uri ->
+                            scope.launch {
+                                spotifyBackend.connect()
+                                spotifyBackend.execute(SpotifyCommand.Play(uri))
+                            }
+                        },
+                        onOpen = { uri ->
+                            context.startActivity(
+                                android.content.Intent(
+                                    android.content.Intent.ACTION_VIEW,
+                                    android.net.Uri.parse(uri)
+                                )
+                            )
+                        },
+                        onLoadMore = { /* Spotify Web API search pagination not wired yet */ },
+                    )
+                }
         }
     }
 }

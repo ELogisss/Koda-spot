@@ -2884,4 +2884,30 @@
     <string name="spotify_failure_on_demand">This account cannot start a single track on demand. Playlists and albums still work.</string>
     <string name="spotify_failure_no_answer">Spotify did not answer.</string>
     <string name="spotify_failure_unknown">Something went wrong talking to the Spotify app.</string>
+
+    <!-- Spotify Web API / Phase H -->
+    <string name="spotify_source_title">Spotify</string>
+    <string name="spotify_attribution">Data and playback from Spotify</string>
+    <string name="spotify_search_empty">Search Spotify for songs, albums, and playlists</string>
+    <string name="spotify_results_count">%1$d results</string>
+    <string name="spotify_show_more">Show more</string>
+    <string name="spotify_queue_note">Plays in Spotify</string>
+    <string name="spotify_track_count">%1$d tracks</string>
+    <string name="spotify_open">Open in Spotify</string>
+    <string name="spotify_open_named">Open %1$s in Spotify</string>
+    <string name="spotify_library_title">Your Spotify library</string>
+    <string name="spotify_library_empty">Your saved songs and playlists will show up here</string>
+    <string name="spotify_saved_songs">Liked songs</string>
+    <string name="spotify_playlists">Playlists</string>
+    <string name="spotify_playlist_empty">This playlist is empty</string>
+    <string name="spotify_playlists_followed_note">Your playlists and playlists you follow</string>
+    <string name="spotify_retry">Retry</string>
+    <string name="spotify_api_no_session">Sign in to Spotify to see this</string>
+    <string name="spotify_api_network">Could not reach Spotify. Check your connection.</string>
+    <string name="spotify_api_forbidden">Spotify refused this request</string>
+    <string name="spotify_api_not_found">Not found on Spotify</string>
+    <string name="spotify_api_rate_limited">Spotify is rate limiting. Try again in a moment.</string>
+    <string name="spotify_api_quota">Spotify request quota hit. Try again later.</string>
+    <string name="spotify_api_server">Spotify had a problem. Try again.</string>
+    <string name="spotify_api_unknown">Something went wrong with Spotify</string>
 </resources>

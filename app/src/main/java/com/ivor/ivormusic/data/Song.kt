@@ -10,7 +10,8 @@ import java.util.Locale
 @Serializable
 enum class SongSource {
     LOCAL,
-    YOUTUBE
+    YOUTUBE,
+    SPOTIFY
 }
 
 /**
