@@ -2910,4 +2910,12 @@
     <string name="spotify_api_quota">Spotify request quota hit. Try again later.</string>
     <string name="spotify_api_server">Spotify had a problem. Try again.</string>
     <string name="spotify_api_unknown">Something went wrong with Spotify</string>
+
+    <!-- Spotify Web API diagnostics (Phase H) -->
+    <string name="spotify_diag_section">API diagnostics</string>
+    <string name="spotify_diag_run">Run endpoint check</string>
+    <string name="spotify_diag_ok">OK</string>
+    <string name="spotify_diag_http">HTTP error</string>
+    <string name="spotify_diag_error">Request error</string>
+    <string name="spotify_diag_skipped">Skipped</string>
 </resources>

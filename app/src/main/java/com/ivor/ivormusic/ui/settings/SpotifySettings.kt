@@ -71,10 +71,13 @@ import com.ivor.ivormusic.data.spotify.SpotifyAuth
 import com.ivor.ivormusic.data.spotify.SpotifyBackend
 import com.ivor.ivormusic.data.spotify.SpotifyCommand
 import com.ivor.ivormusic.data.spotify.SpotifyFailure
+import com.ivor.ivormusic.data.spotify.SpotifyProbe
+import com.ivor.ivormusic.data.spotify.SpotifyProbeStatus
 import com.ivor.ivormusic.data.spotify.SpotifyRedirect
 import com.ivor.ivormusic.data.spotify.SpotifyRemoteState
 import com.ivor.ivormusic.data.spotify.SpotifyRemoteStatus
 import com.ivor.ivormusic.data.spotify.SpotifyRepeat
+import com.ivor.ivormusic.data.spotify.SpotifyWebApi
 import java.text.DateFormat
 import java.util.Date
 import kotlinx.coroutines.awaitCancellation
@@ -117,6 +120,9 @@ internal fun SpotifySettingsPage(onBack: () -> Unit, model: SpotifyViewModel = v
     val redirect = state.redirect
     val backend = model.backend
     val remote by backend.state.collectAsStateWithLifecycle()
+    val spotifyApi = SpotifyWebApi.get(context)
+    var probes by remember { mutableStateOf<List<SpotifyProbe>?>(null) }
+    var diagBusy by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val send: (SpotifyCommand) -> Unit = { command ->
         scope.launch { backend.execute(command)?.let(backend::report) }
@@ -255,6 +261,106 @@ internal fun SpotifySettingsPage(onBack: () -> Unit, model: SpotifyViewModel = v
                     onCommand = send,
                     onRetry = { backend.connect() }
                 )
+            }
+            item {
+                SettingsSection(title = stringResource(R.string.spotify_diag_section)) {
+                    SettingsCard {
+                        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Button(
+                                    onClick = {
+                                        diagBusy = true
+                                        probes = null
+                                        scope.launch {
+                                            try {
+                                                probes = spotifyApi.probeEndpoints()
+                                            } catch (_: Exception) {
+                                                probes = emptyList()
+                                            }
+                                            diagBusy = false
+                                        }
+                                    },
+                                    enabled = !diagBusy && state.connected,
+                                    shapes = ButtonDefaults.shapes(),
+                                    modifier = Modifier.heightIn(min = 48.dp)
+                                ) {
+                                    if (diagBusy) LoadingIndicator(Modifier.size(20.dp))
+                                    else Text(stringResource(R.string.spotify_diag_run))
+                                }
+                            }
+                            probes?.let { probeList ->
+                                if (probeList.isNotEmpty()) {
+                                    probeList.forEach { probe ->
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 4.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Column(Modifier.weight(1f)) {
+                                                Text(
+                                                    probe.id.name,
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = MaterialTheme.colorScheme.onSurface
+                                                )
+                                                Text(
+                                                    probe.path,
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
+                                            }
+                                            Row(
+                                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Text(
+                                                    when (probe.status) {
+                                                        SpotifyProbeStatus.OK -> stringResource(
+                                                            R.string.spotify_diag_ok
+                                                        )
+                                                        SpotifyProbeStatus.HTTP -> stringResource(
+                                                            R.string.spotify_diag_http
+                                                        )
+                                                        SpotifyProbeStatus.ERROR -> stringResource(
+                                                            R.string.spotify_diag_error
+                                                        )
+                                                        SpotifyProbeStatus.SKIPPED -> stringResource(
+                                                            R.string.spotify_diag_skipped
+                                                        )
+                                                    },
+                                                    style = MaterialTheme.typography.bodySmall
+                                                )
+                                                probe.code?.let { code ->
+                                                    Text(
+                                                        code.toString(),
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    )
+                                                }
+                                                probe.at?.let { at ->
+                                                    Text(
+                                                        DateFormat.getDateTimeInstance(
+                                                            DateFormat.SHORT,
+                                                            DateFormat.SHORT
+                                                        ).format(Date(at)),
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
             item {
                 SettingsSection(title = stringResource(R.string.spotify_redirect_title)) {
