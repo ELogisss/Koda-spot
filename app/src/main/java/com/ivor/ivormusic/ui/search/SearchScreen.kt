@@ -1,12 +1,9 @@
 package com.ivor.ivormusic.ui.search
 
 import com.ivor.ivormusic.data.isMissingChannelName
-import com.ivor.ivormusic.data.spotify.SpotifyPlaybackMode
-import com.ivor.ivormusic.data.spotify.SpotifyPlaybackModeStore
 import com.ivor.ivormusic.data.spotify.SpotifySearchKind
-import com.ivor.ivormusic.data.spotify.SpotifySearchState
-import com.ivor.ivormusic.ui.spotify.SpotifySearchStateHolder
-import com.ivor.ivormusic.ui.spotify.spotifySearchSection
+import com.ivor.ivormusic.ui.spotify.SpotifyBlockSlot
+import com.ivor.ivormusic.ui.spotify.SpotifySearchBlock
 import com.ivor.ivormusic.ui.video.videoListItems
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -581,10 +578,6 @@ fun SearchScreen(
         val pageWidth = maxWidth - pageSidePadding * 2
         val artistColumns = if (searchWide) (pageWidth / 200.dp).toInt().coerceIn(3, 7) else 2
         val collectionColumns = if (searchWide) (pageWidth / 420.dp).toInt().coerceIn(2, 3) else 1
-        val spotifySearchState = remember { mutableStateOf(SpotifySearchState()) }
-        val context = androidx.compose.ui.platform.LocalContext.current
-        val playbackModeStore = SpotifyPlaybackModeStore(context)
-        val playbackMode by playbackModeStore.mode.collectAsState()
         LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize(),
@@ -618,23 +611,6 @@ fun SearchScreen(
                     requestInitialFocus = requestInitialFocus && !initialFocusConsumed,
                     onInitialFocusConsumed = { initialFocusConsumed = true }
                 )
-            }
-
-            if (playbackMode == SpotifyPlaybackMode.SPOTIFY_PREFERRED) {
-                item {
-                    SpotifySearchStateHolder(
-                        query = query,
-                        kind = when (selectedCategory) {
-                            SearchCategory.ALBUMS -> SpotifySearchKind.ALBUMS
-                            SearchCategory.PLAYLISTS -> SpotifySearchKind.PLAYLISTS
-                            else -> SpotifySearchKind.TRACKS
-                        },
-                        state = spotifySearchState,
-                        onPlay = {},
-                        onOpen = {},
-                        onLoadMore = {},
-                    )
-                }
             }
 
             // Category Chips (music mode only; pointless in local-only and
@@ -1528,21 +1504,33 @@ fun SearchScreen(
                 }
             }
 
-            if (playbackMode == SpotifyPlaybackMode.YOUTUBE_MUSIC) {
-                item {
-                    SpotifySearchStateHolder(
-                        query = query,
-                        kind = when (selectedCategory) {
-                            SearchCategory.ALBUMS -> SpotifySearchKind.ALBUMS
-                            SearchCategory.PLAYLISTS -> SpotifySearchKind.PLAYLISTS
-                            else -> SpotifySearchKind.TRACKS
-                        },
-                        state = spotifySearchState,
-                        onPlay = {},
-                        onOpen = {},
-                        onLoadMore = {},
-                    )
-                }
+            item {
+                this@LazyColumn.SpotifySearchBlock(
+                    slot = SpotifyBlockSlot.TOP,
+                    query = query,
+                    kind = when (selectedCategory) {
+                        SearchCategory.ALBUMS -> SpotifySearchKind.ALBUMS
+                        SearchCategory.PLAYLISTS -> SpotifySearchKind.PLAYLISTS
+                        else -> SpotifySearchKind.TRACKS
+                    },
+                    onPlay = {},
+                    onOpen = {},
+                    onLoadMore = {},
+                )
+            }
+            item {
+                this@LazyColumn.SpotifySearchBlock(
+                    slot = SpotifyBlockSlot.BOTTOM,
+                    query = query,
+                    kind = when (selectedCategory) {
+                        SearchCategory.ALBUMS -> SpotifySearchKind.ALBUMS
+                        SearchCategory.PLAYLISTS -> SpotifySearchKind.PLAYLISTS
+                        else -> SpotifySearchKind.TRACKS
+                    },
+                    onPlay = {},
+                    onOpen = {},
+                    onLoadMore = {},
+                )
             }
         }
     }

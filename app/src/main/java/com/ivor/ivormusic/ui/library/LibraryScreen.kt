@@ -6,11 +6,9 @@ import androidx.compose.ui.res.stringResource
 import com.ivor.ivormusic.R
 import com.ivor.ivormusic.ui.components.displaySubtitle
 import com.ivor.ivormusic.data.spotify.SpotifyLibraryState
-import com.ivor.ivormusic.data.spotify.SpotifyPlaybackMode
-import com.ivor.ivormusic.data.spotify.SpotifyPlaybackModeStore
-import com.ivor.ivormusic.ui.spotify.SpotifyLibraryStateHolder
+import com.ivor.ivormusic.ui.spotify.SpotifyBlockSlot
+import com.ivor.ivormusic.ui.spotify.SpotifyLibraryBlock
 import com.ivor.ivormusic.ui.spotify.SpotifyLikedSongsScreen
-import com.ivor.ivormusic.ui.spotify.spotifyLibrarySection
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
@@ -1383,10 +1381,6 @@ fun AllSongsList(
     val downloadedIds = remember(downloadedSongs) { downloadedSongs.map { it.id }.toSet() }
     OfferSongsForSelection(songs)
 
-    val spotifyLibraryState = remember { mutableStateOf(SpotifyLibraryState()) }
-    val context = androidx.compose.ui.platform.LocalContext.current
-    val playbackModeStore = SpotifyPlaybackModeStore(context)
-    val playbackMode by playbackModeStore.mode.collectAsState()
     var showSpotifyLikedSongs by remember { mutableStateOf(false) }
 
     if (showSpotifyLikedSongs) {
@@ -1433,35 +1427,16 @@ fun AllSongsList(
             )
         }
 
-        if (playbackMode == SpotifyPlaybackMode.SPOTIFY_PREFERRED) {
-            item {
-                SpotifyLibraryStateHolder(
-                    state = spotifyLibraryState,
-                    onOpenLikedSongs = { showSpotifyLikedSongs = true },
-                    onRetry = {},
-                )
-            }
-            this.spotifyLibrarySection(
-                state = spotifyLibraryState.value,
-                onPlay = { uri ->
-                    // Playback handled by Spotify app via App Remote (Phase F will own the queue)
-                },
-                onOpen = { uri ->
-                    context.startActivity(
-                        android.content.Intent(
-                            android.content.Intent.ACTION_VIEW,
-                            android.net.Uri.parse(uri)
-                        )
-                    )
-                },
-                onOpenPlaylist = { playlist ->
-                    context.startActivity(
-                        android.content.Intent(
-                            android.content.Intent.ACTION_VIEW,
-                            android.net.Uri.parse(playlist.uri)
-                        )
-                    )
-                },
+        item {
+            this@LazyColumn.SpotifyLibraryBlock(
+                slot = SpotifyBlockSlot.TOP,
+                onOpenLikedSongs = { showSpotifyLikedSongs = true },
+                onRetry = {},
+            )
+        }
+        item {
+            this@LazyColumn.SpotifyLibraryBlock(
+                slot = SpotifyBlockSlot.BOTTOM,
                 onOpenLikedSongs = { showSpotifyLikedSongs = true },
                 onRetry = {},
             )
@@ -1630,40 +1605,6 @@ fun AllSongsList(
                     onClick = { onPlayQueue(songs, song) }
                 )
             }
-        }
-
-        if (playbackMode == SpotifyPlaybackMode.YOUTUBE_MUSIC) {
-            item {
-                SpotifyLibraryStateHolder(
-                    state = spotifyLibraryState,
-                    onOpenLikedSongs = { showSpotifyLikedSongs = true },
-                    onRetry = {},
-                )
-            }
-            this.spotifyLibrarySection(
-                state = spotifyLibraryState.value,
-                onPlay = { uri ->
-                    // Playback handled by Spotify app via App Remote (Phase F will own the queue)
-                },
-                onOpen = { uri ->
-                    context.startActivity(
-                        android.content.Intent(
-                            android.content.Intent.ACTION_VIEW,
-                            android.net.Uri.parse(uri)
-                        )
-                    )
-                },
-                onOpenPlaylist = { playlist ->
-                    context.startActivity(
-                        android.content.Intent(
-                            android.content.Intent.ACTION_VIEW,
-                            android.net.Uri.parse(playlist.uri)
-                        )
-                    )
-                },
-                onOpenLikedSongs = { showSpotifyLikedSongs = true },
-                onRetry = {},
-            )
         }
     }
 }
