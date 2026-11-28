@@ -4,12 +4,10 @@ import com.ivor.ivormusic.ui.components.DismissibleSnackbarHost
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.ivor.ivormusic.R
-import com.ivor.ivormusic.data.spotify.SpotifyAuth
-import com.ivor.ivormusic.data.spotify.SpotifyBackend
-import com.ivor.ivormusic.data.spotify.SpotifyCommand
-import com.ivor.ivormusic.data.spotify.SpotifyLibraryState
-import com.ivor.ivormusic.data.spotify.SpotifyWebApi
 import com.ivor.ivormusic.ui.components.displaySubtitle
+import com.ivor.ivormusic.data.spotify.SpotifyLibraryState
+import com.ivor.ivormusic.ui.spotify.SpotifyLibraryStateHolder
+import com.ivor.ivormusic.ui.spotify.SpotifyLikedSongsScreen
 import com.ivor.ivormusic.ui.spotify.spotifyLibrarySection
 
 import androidx.activity.compose.BackHandler
@@ -1383,36 +1381,15 @@ fun AllSongsList(
     val downloadedIds = remember(downloadedSongs) { downloadedSongs.map { it.id }.toSet() }
     OfferSongsForSelection(songs)
 
+    val spotifyLibraryState = remember { mutableStateOf(SpotifyLibraryState()) }
     val context = androidx.compose.ui.platform.LocalContext.current
-    val spotifyAuth = remember { SpotifyAuth.get(context) }
-    val spotifyState by spotifyAuth.state.collectAsState()
-    val spotifyApi = remember { SpotifyWebApi.get(context) }
-    var spotifyLibraryState by remember { mutableStateOf(SpotifyLibraryState()) }
-    var spotifyLibraryLoaded by remember { mutableStateOf(false) }
-    var spotifyLibraryRetry by remember { mutableIntStateOf(0) }
-    val spotifyScope = rememberCoroutineScope()
+    var showSpotifyLikedSongs by remember { mutableStateOf(false) }
 
-    androidx.compose.runtime.LaunchedEffect(spotifyState.connected, spotifyLibraryRetry) {
-        if (!spotifyState.connected) {
-            spotifyLibraryState = SpotifyLibraryState()
-            spotifyLibraryLoaded = false
-            return@LaunchedEffect
-        }
-        if (spotifyLibraryLoaded) return@LaunchedEffect
-        spotifyLibraryState = spotifyLibraryState.copy(loading = true, failure = null)
-        try {
-            val tracks = spotifyApi.savedTracks()
-            val playlists = spotifyApi.playlists()
-            spotifyLibraryState = SpotifyLibraryState(tracks = tracks, playlists = playlists)
-            spotifyLibraryLoaded = true
-        } catch (e: com.ivor.ivormusic.data.spotify.SpotifyApiException) {
-            spotifyLibraryState = spotifyLibraryState.copy(loading = false, failure = e.failure)
-        } catch (_: Exception) {
-            spotifyLibraryState = spotifyLibraryState.copy(
-                loading = false,
-                failure = com.ivor.ivormusic.data.spotify.SpotifyApiFailure.NETWORK
-            )
-        }
+    if (showSpotifyLikedSongs) {
+        SpotifyLikedSongsScreen(
+            onBack = { showSpotifyLikedSongs = false },
+        )
+        return
     }
 
     LazyColumn(
@@ -1452,39 +1429,37 @@ fun AllSongsList(
             )
         }
 
-        if (spotifyState.connected) {
-            spotifyLibrarySection(
+        item {
+            SpotifyLibraryStateHolder(
                 state = spotifyLibraryState,
-                onPlay = { uri ->
-                    spotifyScope.launch {
-                        SpotifyBackend.get(context).connect()
-                        SpotifyBackend.get(context).execute(SpotifyCommand.Play(uri))
-                    }
-                },
-                onOpen = { uri ->
-                    context.startActivity(
-                        android.content.Intent(
-                            android.content.Intent.ACTION_VIEW,
-                            android.net.Uri.parse(uri)
-                        )
-                    )
-                },
-                onOpenPlaylist = { playlist ->
-                    val uri = playlist.uri
-                    context.startActivity(
-                        android.content.Intent(
-                            android.content.Intent.ACTION_VIEW,
-                            android.net.Uri.parse(uri)
-                        )
-                    )
-                },
-                onRetry = {
-                    spotifyLibraryLoaded = false
-                    spotifyLibraryState = SpotifyLibraryState(loading = true)
-                    spotifyLibraryRetry++
-                },
+                onOpenLikedSongs = { showSpotifyLikedSongs = true },
+                onRetry = {},
             )
         }
+        this.spotifyLibrarySection(
+            state = spotifyLibraryState.value,
+            onPlay = { uri ->
+                // Playback handled by Spotify app via App Remote (Phase F will own the queue)
+            },
+            onOpen = { uri ->
+                context.startActivity(
+                    android.content.Intent(
+                        android.content.Intent.ACTION_VIEW,
+                        android.net.Uri.parse(uri)
+                    )
+                )
+            },
+            onOpenPlaylist = { playlist ->
+                context.startActivity(
+                    android.content.Intent(
+                        android.content.Intent.ACTION_VIEW,
+                        android.net.Uri.parse(playlist.uri)
+                    )
+                )
+            },
+            onOpenLikedSongs = { showSpotifyLikedSongs = true },
+            onRetry = {},
+        )
 
         // Recently played rail
         if (recentlyPlayed.isNotEmpty()) {

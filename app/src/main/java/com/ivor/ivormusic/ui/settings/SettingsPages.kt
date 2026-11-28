@@ -137,6 +137,8 @@ import com.ivor.ivormusic.data.MotionArtworkQuality
 import com.ivor.ivormusic.data.PlayerStyle
 import com.ivor.ivormusic.data.SessionManager
 import com.ivor.ivormusic.data.ThemePreferences
+import com.ivor.ivormusic.data.spotify.SpotifyPlaybackMode
+import com.ivor.ivormusic.data.spotify.SpotifyPlaybackModeStore
 import com.ivor.ivormusic.data.VideoHomeConfiguration
 import com.ivor.ivormusic.data.VideoHomeDestination
 import com.ivor.ivormusic.ui.player.PlayerStylePicker
@@ -1204,12 +1206,16 @@ internal fun PlaybackSettingsPage(
     frameInterpolationMaxFps: Int,
     onFrameInterpolationMaxFpsChange: (Int) -> Unit,
     onOpenQualityPicker: (QualityDialogTarget) -> Unit,
+    onOpenSpotifyPage: () -> Unit,
     onBack: () -> Unit
 ) {
     // Which network the quality rows below are talking about. Reframing the
     // whole block beats four near-identical rows that each name their network
     // in the title.
     var showingWifi by remember { mutableStateOf(true) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val playbackModeStore = SpotifyPlaybackModeStore(context)
+    val playbackMode by playbackModeStore.mode.collectAsState()
 
     SettingsDetailScaffold(title = stringResource(R.string.settings_playback_and_quality), onBack = onBack) {
         item {
@@ -1332,6 +1338,24 @@ internal fun PlaybackSettingsPage(
                         enabled = normalizeVolume,
                         onToggle = onNormalizeVolumeToggle,
                         explanation = stringResource(R.string.si_normalize)
+                    )
+
+                    SettingsDivider()
+
+                    SettingsRow(
+                        icon = Icons.Rounded.SwapHoriz,
+                        title = stringResource(R.string.spotify_playback_mode),
+                        subtitle = when (playbackMode) {
+                            SpotifyPlaybackMode.YOUTUBE_MUSIC -> stringResource(
+                                R.string.spotify_playback_mode_youtube_music
+                            )
+                            SpotifyPlaybackMode.SPOTIFY_PREFERRED -> stringResource(
+                                R.string.spotify_playback_mode_spotify_preferred
+                            )
+                        },
+                        onClick = onOpenSpotifyPage,
+                        showChevron = true,
+                        explanation = stringResource(R.string.spotify_playback_mode_note),
                     )
 
                     SettingsDivider()

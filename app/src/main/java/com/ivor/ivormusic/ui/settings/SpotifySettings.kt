@@ -42,6 +42,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -71,6 +72,8 @@ import com.ivor.ivormusic.data.spotify.SpotifyAuth
 import com.ivor.ivormusic.data.spotify.SpotifyBackend
 import com.ivor.ivormusic.data.spotify.SpotifyCommand
 import com.ivor.ivormusic.data.spotify.SpotifyFailure
+import com.ivor.ivormusic.data.spotify.SpotifyPlaybackMode
+import com.ivor.ivormusic.data.spotify.SpotifyPlaybackModeStore
 import com.ivor.ivormusic.data.spotify.SpotifyProbe
 import com.ivor.ivormusic.data.spotify.SpotifyProbeStatus
 import com.ivor.ivormusic.data.spotify.SpotifyRedirect
@@ -113,6 +116,8 @@ internal fun SpotifySettingsPage(onBack: () -> Unit, model: SpotifyViewModel = v
     val state by model.state.collectAsStateWithLifecycle()
     val auth = model.auth
     val context = LocalContext.current
+    val playbackModeStore = SpotifyPlaybackModeStore(context)
+    val playbackMode by playbackModeStore.mode.collectAsState()
     @Suppress("DEPRECATION") // The newer clipboard API has no plain-text one-liner; Last.fm's page uses this too.
     val clipboard = LocalClipboardManager.current
     var clientId by rememberSaveable { mutableStateOf(state.clientId) }
@@ -252,6 +257,34 @@ internal fun SpotifySettingsPage(onBack: () -> Unit, model: SpotifyViewModel = v
                                 Text(stringResource(R.string.spotify_test))
                             }
                         }
+                    }
+                }
+            }
+            item {
+                SettingsSection(title = stringResource(R.string.spotify_playback_mode)) {
+                    SettingsCard {
+                        SettingsChoiceRow(
+                            icon = Icons.Rounded.Shuffle,
+                            title = stringResource(R.string.spotify_playback_mode),
+                            subtitle = stringResource(R.string.spotify_playback_mode_sub),
+                            labels = listOf(
+                                stringResource(R.string.spotify_playback_mode_youtube_music),
+                                stringResource(R.string.spotify_playback_mode_spotify_preferred),
+                            ),
+                            selectedIndex = when (playbackMode) {
+                                SpotifyPlaybackMode.YOUTUBE_MUSIC -> 0
+                                SpotifyPlaybackMode.SPOTIFY_PREFERRED -> 1
+                            },
+                            onSelect = { index ->
+                                playbackModeStore.setMode(
+                                    when (index) {
+                                        0 -> SpotifyPlaybackMode.YOUTUBE_MUSIC
+                                        1 -> SpotifyPlaybackMode.SPOTIFY_PREFERRED
+                                        else -> playbackMode
+                                    }
+                                )
+                            },
+                        )
                     }
                 }
             }

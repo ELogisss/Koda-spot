@@ -2918,4 +2918,15 @@
     <string name="spotify_diag_http">HTTP error</string>
     <string name="spotify_diag_error">Request error</string>
     <string name="spotify_diag_skipped">Skipped</string>
+
+    <!-- Spotify liked songs (Phase H2) -->
+    <string name="spotify_liked_songs_subtitle">%1$d saved songs</string>
+    <string name="spotify_back">Volver</string>
+
+    <!-- Spotify playback mode (Phase H2) -->
+    <string name="spotify_playback_mode">Playback source</string>
+    <string name="spotify_playback_mode_sub">Choose where music plays when you tap a Spotify result</string>
+    <string name="spotify_playback_mode_youtube_music">YouTube Music (default)</string>
+    <string name="spotify_playback_mode_spotify_preferred">Spotify (app opens to play)</string>
+    <string name="spotify_playback_mode_note">Queue and YouTube matching arrive in later phases.</string>
 </resources>

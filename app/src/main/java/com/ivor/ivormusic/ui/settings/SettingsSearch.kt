@@ -227,6 +227,10 @@ internal fun buildSettingsSearchIndex(
         listOf("spotify", "login", "sign in", "oauth", "pkce", "client id", "redirect", "playback")) {
         onOpenPage(SettingsPage.SPOTIFY)
     }
+    entry("spotify_playback_mode", stringResource(R.string.spotify_playback_mode), "Spotify", Icons.Rounded.Album,
+        listOf("spotify", "playback", "source", "youtube music", "preferred")) {
+        onOpenPage(SettingsPage.SPOTIFY)
+    }
 
     // Account
     entry(

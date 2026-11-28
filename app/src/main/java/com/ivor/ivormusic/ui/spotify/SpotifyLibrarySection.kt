@@ -21,7 +21,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.ivor.ivormusic.R
-import com.ivor.ivormusic.data.Song
 import com.ivor.ivormusic.data.spotify.SpotifyApiFailure
 import com.ivor.ivormusic.data.spotify.SpotifyLibraryState
 import com.ivor.ivormusic.data.spotify.SpotifyPlaylistItem
@@ -36,16 +35,16 @@ import com.ivor.ivormusic.ui.components.AdaptiveModalSheet
  * downloaded: a tap sends `play(uri)` to the Spotify app, and the block says
  * so, because the Koda queue does not take over until a later phase.
  *
- * A playlist the user owns or collaborates on can be opened to see its songs
- * (`GET /playlists/{id}/items` works only for those). A followed playlist
- * cannot be read that way - Spotify answers 403 - so it plays as a whole and
- * the block says that instead of showing an empty list.
+ * Saved songs are shown as a single entry card ("Liked songs") that opens a
+ * dedicated screen. The list itself is not drawn here: it lives on
+ * [SpotifyLikedSongsScreen], paginated in pages of 50.
  */
 fun LazyListScope.spotifyLibrarySection(
     state: SpotifyLibraryState,
     onPlay: (String) -> Unit,
     onOpen: (String) -> Unit,
     onOpenPlaylist: (SpotifyPlaylistItem) -> Unit,
+    onOpenLikedSongs: () -> Unit,
     onRetry: () -> Unit,
 ) {
     item(key = "spotify-library-header") {
@@ -81,20 +80,14 @@ fun LazyListScope.spotifyLibrarySection(
             }
     }
 
+    // Saved songs: one entry card, not the full list. Tapping opens the
+    // dedicated Liked songs screen (paginated, offset-based).
     if (state.tracks.isNotEmpty()) {
-        item(key = "spotify-library-tracks-header") {
-            SpotifySubHeader(stringResource(R.string.spotify_saved_songs))
-        }
-        state.tracks.forEachIndexed { index, song ->
-            item(key = "spotify-library-track-$index-${song.id}") {
-                SpotifyTrackRow(
-                    song = song,
-                    onPlay = { onPlay(song.id) },
-                    onOpen = {
-                        onOpen("https://open.spotify.com/track/${song.id.spotifyTrackId()}")
-                    },
-                )
-            }
+        item(key = "spotify-library-liked-songs") {
+            SpotifyLikedSongsCard(
+                trackCount = state.tracks.size,
+                onClick = onOpenLikedSongs,
+            )
         }
     }
 
@@ -148,7 +141,7 @@ private fun SpotifySubHeader(title: String) {
 @Composable
 fun SpotifyPlaylistSheet(
     playlist: SpotifyPlaylistItem,
-    songs: List<Song>,
+    songs: List<com.ivor.ivormusic.data.Song>,
     loading: Boolean,
     failure: SpotifyApiFailure?,
     onDismiss: () -> Unit,

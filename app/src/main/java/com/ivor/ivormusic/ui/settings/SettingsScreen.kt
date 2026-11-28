@@ -980,6 +980,7 @@ fun SettingsScreen(
             frameInterpolationMaxFps = frameInterpolationMaxFps,
             onFrameInterpolationMaxFpsChange = onFrameInterpolationMaxFpsChange,
             onOpenQualityPicker = { qualityDialogTarget = it },
+            onOpenSpotifyPage = { page = SettingsPage.SPOTIFY },
             onBack = { page = SettingsPage.HUB }
         )
 
