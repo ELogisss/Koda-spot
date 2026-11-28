@@ -283,7 +283,13 @@ internal fun SpotifySettingsPage(onBack: () -> Unit, model: SpotifyViewModel = v
                                         else -> playbackMode
                                     }
                                 )
-                            },
+                            }
+                        )
+                        Text(
+                            stringResource(R.string.spotify_playback_mode_note),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
                         )
                     }
                 }

@@ -26,6 +26,9 @@ class SpotifyPlaybackModeStore(private val context: Context) {
     fun readMode(): SpotifyPlaybackMode =
         SpotifyPlaybackMode.fromId(prefs.getString(KEY_MODE, null))
 
+    /** Direct read of the stored value, without the flow cache. For playback decisions. */
+    fun current(): SpotifyPlaybackMode = readMode()
+
     fun setMode(value: SpotifyPlaybackMode) {
         prefs.edit().putString(KEY_MODE, value.id).apply()
         _mode.value = value

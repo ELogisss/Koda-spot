@@ -1,6 +1,8 @@
 package com.ivor.ivormusic.ui.search
 
 import com.ivor.ivormusic.data.isMissingChannelName
+import com.ivor.ivormusic.data.spotify.SpotifyPlaybackMode
+import com.ivor.ivormusic.data.spotify.SpotifyPlaybackModeStore
 import com.ivor.ivormusic.data.spotify.SpotifySearchKind
 import com.ivor.ivormusic.data.spotify.SpotifySearchState
 import com.ivor.ivormusic.ui.spotify.SpotifySearchStateHolder
@@ -581,6 +583,8 @@ fun SearchScreen(
         val collectionColumns = if (searchWide) (pageWidth / 420.dp).toInt().coerceIn(2, 3) else 1
         val spotifySearchState = remember { mutableStateOf(SpotifySearchState()) }
         val context = androidx.compose.ui.platform.LocalContext.current
+        val playbackModeStore = SpotifyPlaybackModeStore(context)
+        val playbackMode by playbackModeStore.mode.collectAsState()
         LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize(),
@@ -615,7 +619,24 @@ fun SearchScreen(
                     onInitialFocusConsumed = { initialFocusConsumed = true }
                 )
             }
-            
+
+            if (playbackMode == SpotifyPlaybackMode.SPOTIFY_PREFERRED) {
+                item {
+                    SpotifySearchStateHolder(
+                        query = query,
+                        kind = when (selectedCategory) {
+                            SearchCategory.ALBUMS -> SpotifySearchKind.ALBUMS
+                            SearchCategory.PLAYLISTS -> SpotifySearchKind.PLAYLISTS
+                            else -> SpotifySearchKind.TRACKS
+                        },
+                        state = spotifySearchState,
+                        onPlay = {},
+                        onOpen = {},
+                        onLoadMore = {},
+                    )
+                }
+            }
+
             // Category Chips (music mode only; pointless in local-only and
             // hidden while a pasted link resolves)
             if (!videoMode && !localOnly && query.isNotEmpty() && parsedLink == null) {
@@ -1507,40 +1528,22 @@ fun SearchScreen(
                 }
             }
 
-            item {
-                SpotifySearchStateHolder(
-                    query = query,
-                    kind = when (selectedCategory) {
-                        SearchCategory.ALBUMS -> SpotifySearchKind.ALBUMS
-                        SearchCategory.PLAYLISTS -> SpotifySearchKind.PLAYLISTS
-                        else -> SpotifySearchKind.TRACKS
-                    },
-                    state = spotifySearchState,
-                    onPlay = {},
-                    onOpen = {},
-                    onLoadMore = {},
-                )
-            }
-        this.spotifySearchSection(
-            state = spotifySearchState.value,
-            kind = when (selectedCategory) {
-                SearchCategory.ALBUMS -> SpotifySearchKind.ALBUMS
-                SearchCategory.PLAYLISTS -> SpotifySearchKind.PLAYLISTS
-                else -> SpotifySearchKind.TRACKS
-            },
-            onPlay = { uri ->
-                // Playback handled by Spotify app via App Remote (Phase F will own the queue)
-            },
-            onOpen = { uri ->
-                context.startActivity(
-                    android.content.Intent(
-                        android.content.Intent.ACTION_VIEW,
-                        android.net.Uri.parse(uri)
+            if (playbackMode == SpotifyPlaybackMode.YOUTUBE_MUSIC) {
+                item {
+                    SpotifySearchStateHolder(
+                        query = query,
+                        kind = when (selectedCategory) {
+                            SearchCategory.ALBUMS -> SpotifySearchKind.ALBUMS
+                            SearchCategory.PLAYLISTS -> SpotifySearchKind.PLAYLISTS
+                            else -> SpotifySearchKind.TRACKS
+                        },
+                        state = spotifySearchState,
+                        onPlay = {},
+                        onOpen = {},
+                        onLoadMore = {},
                     )
-                )
-            },
-            onLoadMore = {},
-        )
+                }
+            }
         }
     }
 }
