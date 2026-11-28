@@ -1513,9 +1513,6 @@ fun SearchScreen(
                         SearchCategory.PLAYLISTS -> SpotifySearchKind.PLAYLISTS
                         else -> SpotifySearchKind.TRACKS
                     },
-                    onPlay = {},
-                    onOpen = {},
-                    onLoadMore = {},
                 )
             }
             item {
@@ -1527,9 +1524,6 @@ fun SearchScreen(
                         SearchCategory.PLAYLISTS -> SpotifySearchKind.PLAYLISTS
                         else -> SpotifySearchKind.TRACKS
                     },
-                    onPlay = {},
-                    onOpen = {},
-                    onLoadMore = {},
                 )
             }
         }

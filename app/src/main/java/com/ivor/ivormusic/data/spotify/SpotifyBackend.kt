@@ -10,6 +10,7 @@ import com.spotify.protocol.client.Subscription
 import com.spotify.protocol.types.Capabilities
 import com.spotify.protocol.types.Empty
 import com.spotify.protocol.types.PlayerState
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -97,6 +98,8 @@ class SpotifyBackend private constructor(context: Context) {
         if (current != null) {
             try {
                 SpotifyAppRemote.disconnect(current)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 // Already gone: the app closed between the check and the call.
                 KLog.w(TAG, "Spotify disconnect failed", e)
@@ -123,6 +126,8 @@ class SpotifyBackend private constructor(context: Context) {
         }
         val call = try {
             current.send(command)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             return SpotifyFailure.of(e)
         }
@@ -188,6 +193,8 @@ class SpotifyBackend private constructor(context: Context) {
             .build()
         try {
             SpotifyAppRemote.connect(app, params, listener)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             connecting = false
             lost(SpotifyFailure.of(e))

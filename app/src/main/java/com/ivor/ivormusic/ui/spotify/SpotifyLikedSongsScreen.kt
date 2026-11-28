@@ -44,7 +44,7 @@ import androidx.compose.ui.unit.dp
  */
 @Composable
 fun SpotifyLikedSongsScreen(
-    onBack: () -> Unit,
+    onClose: () -> Unit,
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val spotifyAuth = remember { SpotifyAuth.get(context) }
@@ -102,7 +102,7 @@ fun SpotifyLikedSongsScreen(
                 .padding(horizontal = 20.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            TextButton(onClick = onBack) {
+            TextButton(onClick = onClose) {
                 Text(stringResource(R.string.spotify_back))
             }
             androidx.compose.foundation.layout.Spacer(Modifier.width(8.dp))

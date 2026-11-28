@@ -5,10 +5,8 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.ivor.ivormusic.R
 import com.ivor.ivormusic.ui.components.displaySubtitle
-import com.ivor.ivormusic.data.spotify.SpotifyLibraryState
 import com.ivor.ivormusic.ui.spotify.SpotifyBlockSlot
 import com.ivor.ivormusic.ui.spotify.SpotifyLibraryBlock
-import com.ivor.ivormusic.ui.spotify.SpotifyLikedSongsScreen
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
@@ -1381,15 +1379,6 @@ fun AllSongsList(
     val downloadedIds = remember(downloadedSongs) { downloadedSongs.map { it.id }.toSet() }
     OfferSongsForSelection(songs)
 
-    var showSpotifyLikedSongs by remember { mutableStateOf(false) }
-
-    if (showSpotifyLikedSongs) {
-        SpotifyLikedSongsScreen(
-            onBack = { showSpotifyLikedSongs = false },
-        )
-        return
-    }
-
     LazyColumn(
         state = listState,
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -1430,15 +1419,11 @@ fun AllSongsList(
         item {
             this@LazyColumn.SpotifyLibraryBlock(
                 slot = SpotifyBlockSlot.TOP,
-                onOpenLikedSongs = { showSpotifyLikedSongs = true },
-                onRetry = {},
             )
         }
         item {
             this@LazyColumn.SpotifyLibraryBlock(
                 slot = SpotifyBlockSlot.BOTTOM,
-                onOpenLikedSongs = { showSpotifyLikedSongs = true },
-                onRetry = {},
             )
         }
 

@@ -13,6 +13,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import com.ivor.ivormusic.data.spotify.SpotifyApiException
 import com.ivor.ivormusic.data.spotify.SpotifyApiFailure
@@ -30,14 +31,16 @@ import com.ivor.ivormusic.data.spotify.SpotifyWebApi
  *
  * Lee el [SpotifyPlaybackMode] internamente y solo dibuja cuando el [slot]
  * coincide con el modo activo: TOP para spotify_preferred, BOTTOM para
- * youtube_music. Encapsula estado, efectos y dibujo; la pantalla solo llama
- * una vez arriba y otra abajo.
+ * youtube_music. Encapsula estado, efectos y dibujo; la pantalla solo pasa
+ * el slot, sin lambdas.
+ *
+ * Cuando el usuario toca "Liked songs", el bloque gestiona internamente la
+ * pantalla de canciones guardadas paginada, sin que la pantalla de Koda
+ * necesite conocer su estado.
  */
 @Composable
 fun LazyListScope.SpotifyLibraryBlock(
     slot: SpotifyBlockSlot,
-    onOpenLikedSongs: () -> Unit,
-    onRetry: () -> Unit,
 ) {
     val context: Context = androidx.compose.ui.platform.LocalContext.current
     val playbackModeStore = SpotifyPlaybackModeStore(context)
@@ -56,6 +59,7 @@ fun LazyListScope.SpotifyLibraryBlock(
     var spotifyLibraryState by remember { mutableStateOf(SpotifyLibraryState()) }
     var spotifyLibraryLoaded by remember { mutableStateOf(false) }
     var spotifyLibraryRetry by mutableIntStateOf(0)
+    var showLikedSongs by remember { mutableStateOf(false) }
     val spotifyScope = rememberCoroutineScope()
 
     LaunchedEffect(spotifyState.connected, spotifyLibraryRetry) {
@@ -73,12 +77,21 @@ fun LazyListScope.SpotifyLibraryBlock(
             spotifyLibraryLoaded = true
         } catch (e: SpotifyApiException) {
             spotifyLibraryState = spotifyLibraryState.copy(loading = false, failure = e.failure)
+        } catch (e: CancellationException) {
+            throw e
         } catch (_: Exception) {
             spotifyLibraryState = spotifyLibraryState.copy(
                 loading = false,
                 failure = SpotifyApiFailure.NETWORK,
             )
         }
+    }
+
+    if (showLikedSongs) {
+        SpotifyLikedSongsScreen(
+            onClose = { showLikedSongs = false },
+        )
+        return
     }
 
     spotifyLibrarySection(
@@ -100,7 +113,7 @@ fun LazyListScope.SpotifyLibraryBlock(
                 Intent(Intent.ACTION_VIEW, Uri.parse(uri))
             )
         },
-        onOpenLikedSongs = onOpenLikedSongs,
+        onOpenLikedSongs = { showLikedSongs = true },
         onRetry = {
             spotifyLibraryLoaded = false
             spotifyLibraryState = SpotifyLibraryState(loading = true)
